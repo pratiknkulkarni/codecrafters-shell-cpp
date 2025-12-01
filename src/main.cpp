@@ -1,82 +1,124 @@
+#include <filesystem>
 #include <iostream>
-#include <ranges>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 using namespace std;
 
-
 std::vector<std::string> tokenize(const string &line) {
-    vector<string> tokens;
-    stringstream ss(line);
-    string token;
+  vector<string> tokens;
+  stringstream ss(line);
+  string token;
 
-    while (ss >> token) {
-        tokens.push_back(token);
-    }
+  while (ss >> token) {
+    tokens.push_back(token);
+  }
 
-    return tokens;
+  return tokens;
 }
 
-void exitCommand() {
-    exit(0);
+std::vector<std::string> splitString(const std::string &s, char delimiter) {
+  std::vector<std::string> tokens;
+  std::string token;
+  size_t start = 0;
+  size_t end = s.find(delimiter);
+
+  while (end != std::string::npos) {
+    token = s.substr(start, end - start);
+    tokens.push_back(token);
+    start = end + 1;
+    end = s.find(delimiter, start);
+  }
+
+  tokens.push_back(s.substr(start));
+  return tokens;
 }
+
+void exitCommand() { exit(0); }
 
 void echoCommand(vector<string> args) {
-    string echoOutput;
-    for (auto arg: args) {
-        echoOutput += arg;
-        echoOutput += " ";
+  string echoOutput;
+  for (auto arg : args) {
+    echoOutput += arg;
+    echoOutput += " ";
+  }
+  cout << echoOutput << endl;
+}
+
+bool is_builtin(string arg) {
+  const vector<string> builtins{"echo", "type", "exit"};
+
+  // if present in my custom commands, might as well return
+  auto it = find(builtins.begin(), builtins.end(), arg);
+  if (it != builtins.end()) {
+    return true;
+  }
+
+  // else check in the PATH
+  const char *env_p = std::getenv("PATH");
+  auto pathDirectories = splitString(env_p, ':');
+  for (auto dir : pathDirectories) {
+    if (std::filesystem::exists(std::filesystem::path(dir) / arg)) {
+      return true;
     }
-    cout << echoOutput << endl;
+  }
+
+  return false;
 }
 
 void typeCommand(string arg) {
-    vector<string> builtins{"echo", "type", "exit"};
-    auto it = find(builtins.begin(), builtins.end(), arg);
-    if (it != builtins.end()) {
-        cout << arg << " is a shell builtin" << endl;
-    } else {
-        cout << arg << ": not found" << endl;
-    }
+  if (is_builtin(arg)) {
+    cout << arg << " is a shell builtin" << endl;
+  } else {
+    cout << arg << ": not found" << endl;
+  }
 }
 
 void repl() {
-    string userInput;
+  string userInput;
 
-    while (true) {
-        cout << "$ ";
-        if (!getline(cin, userInput)) {
-            break;
-        }
-        auto tokens = tokenize(userInput);
-        if (tokens.empty()) {
-            continue;
-        }
-
-        const string &command = tokens[0];
-        vector<string> arguments(tokens.begin() + 1, tokens.end());
-
-        if (command == "exit") {
-            exitCommand();
-        } else if (command == "echo") {
-            echoCommand(arguments);
-        } else if (command == "type") {
-            if (arguments.size() != 1) {
-                exit(1);
-            } else {
-                typeCommand(arguments[0]);
-            }
-        } else {
-            cout << userInput << ": command not found" << endl;
-        }
+  while (true) {
+    cout << "$ ";
+    if (!getline(cin, userInput)) {
+      break;
     }
+    auto tokens = tokenize(userInput);
+    if (tokens.empty()) {
+      continue;
+    }
+
+    const string &command = tokens[0];
+    vector<string> arguments(tokens.begin() + 1, tokens.end());
+
+    if (command == "exit") {
+      exitCommand();
+    } else if (command == "echo") {
+      echoCommand(arguments);
+    } else if (command == "type") {
+      if (arguments.size() != 1) {
+        exit(1);
+      } else {
+        typeCommand(arguments[0]);
+      }
+    } else {
+      cout << userInput << ": command not found" << endl;
+    }
+  }
 }
 
 int main() {
-    cout << std::unitbuf;
-    cerr << std::unitbuf;
+  cout << std::unitbuf;
+  cerr << std::unitbuf;
 
-    repl();
+  // if (std::filesystem::exists(env_p) && std::filesystem::is_directory(env_p))
+  // {
+  //   for (const auto &entry : std::filesystem::directory_iterator(env_p)) {
+  //     std::cout << entry.path().filename() << std::endl;
+  //   }
+  // } else {
+  //   std::cerr << "Directory not found or is not a directory." << std::endl;
+  // }
+
+  repl();
 }
