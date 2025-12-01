@@ -52,6 +52,7 @@ bool is_builtin(string arg) {
   // if present in my custom commands, might as well return
   auto it = find(builtins.begin(), builtins.end(), arg);
   if (it != builtins.end()) {
+    cout << arg << " is a shell builtin";
     return true;
   }
 
@@ -60,19 +61,22 @@ bool is_builtin(string arg) {
   auto pathDirectories = splitString(env_p, ':');
   for (auto dir : pathDirectories) {
     if (std::filesystem::exists(std::filesystem::path(dir) / arg)) {
+      cout << arg << " is " << string(std::filesystem::path(dir) / arg) << endl;
       return true;
     }
   }
 
+  cout << arg << ": not found" << endl;
   return false;
 }
 
 void typeCommand(string arg) {
-  if (is_builtin(arg)) {
-    cout << arg << " is a shell builtin" << endl;
-  } else {
-    cout << arg << ": not found" << endl;
-  }
+  is_builtin(arg);
+  // if (is_builtin(arg)) {
+  //   cout << arg << " is a shell builtin" << endl;
+  // } else {
+  //   cout << arg << ": not found" << endl;
+  // }
 }
 
 void repl() {
