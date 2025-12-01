@@ -35,9 +35,9 @@ std::vector<std::string> splitString(const std::string &s, char delimiter) {
   return tokens;
 }
 
-void exitCommand() { exit(0); }
+void exit_command() { exit(0); }
 
-void echoCommand(vector<string> args) {
+void echo_command(vector<string> args) {
   string echoOutput;
   for (auto arg : args) {
     echoOutput += arg;
@@ -46,69 +46,55 @@ void echoCommand(vector<string> args) {
   cout << echoOutput << endl;
 }
 
-bool is_builtin(string arg) {
-  const vector<string> builtins{"echo", "type", "exit"};
-  auto it = find(builtins.begin(), builtins.end(), arg);
-  if (it != builtins.end()) {
-    cout << arg << " is a shell builtin" << endl;
-    return true;
-  }
-
-  const char *env_p = std::getenv("PATH");
-  auto pathDirectories = splitString(env_p, ':');
-  for (auto dir : pathDirectories) {
-    auto fullPath = std::filesystem::path(dir) / arg;
-    // Check if file exists, is a regular file, and has execute permissions
-    if (std::filesystem::exists(fullPath) &&
-        std::filesystem::is_regular_file(fullPath)) {
-      auto perms = std::filesystem::status(fullPath).permissions();
-      if ((perms & std::filesystem::perms::owner_exec) !=
-              std::filesystem::perms::none ||
-          (perms & std::filesystem::perms::group_exec) !=
-              std::filesystem::perms::none ||
-          (perms & std::filesystem::perms::others_exec) !=
-              std::filesystem::perms::none) {
-        cout << arg << " is " << fullPath.string() << endl;
-        return true;
-      }
+bool is_executable(const std::filesystem::path &path) {
+  try {
+    if (!std::filesystem::exists(path) ||
+        !std::filesystem::is_regular_file(path)) {
+      return false;
     }
+    auto perms = std::filesystem::status(path).permissions();
+    return (perms & std::filesystem::perms::owner_exec) !=
+               std::filesystem::perms::none ||
+           (perms & std::filesystem::perms::group_exec) !=
+               std::filesystem::perms::none ||
+           (perms & std::filesystem::perms::others_exec) !=
+               std::filesystem::perms::none;
+  } catch (const std::filesystem::filesystem_error &) {
+    return false;
   }
-  cout << arg << ": not found" << endl;
-  return false;
 }
 
-// bool is_builtin(string arg) {
-//   const vector<string> builtins{"echo", "type", "exit"};
-//
-//   // if present in my custom commands, might as well return
-//   auto it = find(builtins.begin(), builtins.end(), arg);
-//   if (it != builtins.end()) {
-//     cout << arg << " is a shell builtin";
-//     return true;
-//   }
-//
-//   // else check in the PATH
-//   const char *env_p = std::getenv("PATH");
-//   auto pathDirectories = splitString(env_p, ':');
-//   for (auto dir : pathDirectories) {
-//     // cout << dir << endl;
-//     if (std::filesystem::exists(std::filesystem::path(dir) / arg)) {
-//       cout << arg << " is " << string(std::filesystem::path(dir) / arg) <<
-//       endl; return true;
-//     }
-//   }
-//
-//   cout << arg << ": not found" << endl;
-//   return false;
-// }
+std::string find_executable_in_path(const std::string &name) {
+  const char *env_path = std::getenv("PATH");
+  if (!env_path) {
+    return "";
+  }
 
-void typeCommand(string arg) {
-  is_builtin(arg);
-  // if (is_builtin(arg)) {
-  //   cout << arg << " is a shell builtin" << endl;
-  // } else {
-  //   cout << arg << ": not found" << endl;
-  // }
+  auto pathDirectories = splitString(env_path, ':');
+  for (const auto &dir : pathDirectories) {
+    auto fullPath = std::filesystem::path(dir) / name;
+    if (is_executable(fullPath)) {
+      return fullPath.string();
+    }
+  }
+  return "";
+}
+
+void type_command(const std::string &arg) {
+  // start with my custom builtins
+  const vector<string> builtins{"echo", "type", "exit"};
+  if (find(builtins.begin(), builtins.end(), arg) != builtins.end()) {
+    cout << arg << " is a shell builtin" << endl;
+    return;
+  }
+
+  // else go to the pathos
+  std::string path = find_executable_in_path(arg);
+  if (!path.empty()) {
+    cout << arg << " is " << path << endl;
+  } else {
+    cout << arg << ": not found" << endl;
+  }
 }
 
 void repl() {
@@ -128,14 +114,14 @@ void repl() {
     vector<string> arguments(tokens.begin() + 1, tokens.end());
 
     if (command == "exit") {
-      exitCommand();
+      exit_command();
     } else if (command == "echo") {
-      echoCommand(arguments);
+      echo_command(arguments);
     } else if (command == "type") {
       if (arguments.size() != 1) {
         exit(1);
       } else {
-        typeCommand(arguments[0]);
+        type_command(arguments[0]);
       }
     } else {
       cout << userInput << ": command not found" << endl;
@@ -146,15 +132,6 @@ void repl() {
 int main() {
   cout << std::unitbuf;
   cerr << std::unitbuf;
-
-  // if (std::filesystem::exists(env_p) && std::filesystem::is_directory(env_p))
-  // {
-  //   for (const auto &entry : std::filesystem::directory_iterator(env_p)) {
-  //     std::cout << entry.path().filename() << std::endl;
-  //   }
-  // } else {
-  //   std::cerr << "Directory not found or is not a directory." << std::endl;
-  // }
 
   repl();
 }
