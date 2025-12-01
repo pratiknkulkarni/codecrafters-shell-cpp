@@ -3,14 +3,27 @@
 
 using namespace std;
 
-int main() {
-  string command;
+void exitCommand() {
+    exit(0);
+}
 
-  cout << std::unitbuf;
-  cerr << std::unitbuf;
-  while (true) {
-    cout << "$ ";
-    cin >> command;
-    cout << command << ": command not found" << endl;
-  }
+void repl() {
+    string command;
+    while (true) {
+        cout << "$ ";
+        cin >> command;
+
+        if (command == "exit") {
+            exitCommand();
+        }
+
+        cout << command << ": command not found" << endl;
+    }
+}
+
+int main() {
+    cout << std::unitbuf;
+    cerr << std::unitbuf;
+
+    repl();
 }
