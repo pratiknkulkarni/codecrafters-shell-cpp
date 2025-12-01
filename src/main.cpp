@@ -32,6 +32,16 @@ void echoCommand(vector<string> args) {
     cout << echoOutput << endl;
 }
 
+void typeCommand(string arg) {
+    vector<string> builtins{"echo", "type", "exit"};
+    auto it = find(builtins.begin(), builtins.end(), arg);
+    if (it != builtins.end()) {
+        cout << arg << " is a shell builtin" << endl;
+    } else {
+        cout << arg << ": not found" << endl;
+    }
+}
+
 void repl() {
     string userInput;
 
@@ -52,6 +62,12 @@ void repl() {
             exitCommand();
         } else if (command == "echo") {
             echoCommand(arguments);
+        } else if (command == "type") {
+            if (arguments.size() != 1) {
+                exit(1);
+            } else {
+                typeCommand(arguments[0]);
+            }
         } else {
             cout << userInput << ": command not found" << endl;
         }
