@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
@@ -97,6 +98,18 @@ void type_command(const std::string &arg) {
   }
 }
 
+void custom_command(const string &command, vector<string> arguments) {
+  auto path = find_executable_in_path(command);
+  string path_with_args = command + " ";
+
+  for (string args : arguments) {
+    path_with_args += args;
+    path_with_args += " ";
+  }
+
+  system(path_with_args.c_str());
+}
+
 void repl() {
   string userInput;
 
@@ -124,7 +137,12 @@ void repl() {
         type_command(arguments[0]);
       }
     } else {
-      cout << userInput << ": command not found" << endl;
+      auto path = find_executable_in_path(command);
+      if (path == "") {
+        cout << userInput << ": command not found" << endl;
+      } else {
+        custom_command(command, arguments);
+      }
     }
   }
 }
