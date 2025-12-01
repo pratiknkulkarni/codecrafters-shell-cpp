@@ -48,27 +48,59 @@ void echoCommand(vector<string> args) {
 
 bool is_builtin(string arg) {
   const vector<string> builtins{"echo", "type", "exit"};
-
-  // if present in my custom commands, might as well return
   auto it = find(builtins.begin(), builtins.end(), arg);
   if (it != builtins.end()) {
-    cout << arg << " is a shell builtin";
+    cout << arg << " is a shell builtin" << endl;
     return true;
   }
 
-  // else check in the PATH
   const char *env_p = std::getenv("PATH");
   auto pathDirectories = splitString(env_p, ':');
   for (auto dir : pathDirectories) {
-    if (std::filesystem::exists(std::filesystem::path(dir) / arg)) {
-      cout << arg << " is " << string(std::filesystem::path(dir) / arg) << endl;
-      return true;
+    auto fullPath = std::filesystem::path(dir) / arg;
+    // Check if file exists, is a regular file, and has execute permissions
+    if (std::filesystem::exists(fullPath) &&
+        std::filesystem::is_regular_file(fullPath)) {
+      auto perms = std::filesystem::status(fullPath).permissions();
+      if ((perms & std::filesystem::perms::owner_exec) !=
+              std::filesystem::perms::none ||
+          (perms & std::filesystem::perms::group_exec) !=
+              std::filesystem::perms::none ||
+          (perms & std::filesystem::perms::others_exec) !=
+              std::filesystem::perms::none) {
+        cout << arg << " is " << fullPath.string() << endl;
+        return true;
+      }
     }
   }
-
   cout << arg << ": not found" << endl;
   return false;
 }
+
+// bool is_builtin(string arg) {
+//   const vector<string> builtins{"echo", "type", "exit"};
+//
+//   // if present in my custom commands, might as well return
+//   auto it = find(builtins.begin(), builtins.end(), arg);
+//   if (it != builtins.end()) {
+//     cout << arg << " is a shell builtin";
+//     return true;
+//   }
+//
+//   // else check in the PATH
+//   const char *env_p = std::getenv("PATH");
+//   auto pathDirectories = splitString(env_p, ':');
+//   for (auto dir : pathDirectories) {
+//     // cout << dir << endl;
+//     if (std::filesystem::exists(std::filesystem::path(dir) / arg)) {
+//       cout << arg << " is " << string(std::filesystem::path(dir) / arg) <<
+//       endl; return true;
+//     }
+//   }
+//
+//   cout << arg << ": not found" << endl;
+//   return false;
+// }
 
 void typeCommand(string arg) {
   is_builtin(arg);
