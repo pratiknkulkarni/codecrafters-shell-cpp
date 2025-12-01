@@ -8,8 +8,9 @@ int main() {
 
   cout << std::unitbuf;
   cerr << std::unitbuf;
-
-  cout << "$ ";
-  cin >> command;
-  cout << command << ": command not found" << endl;
+  while (true) {
+    cout << "$ ";
+    cin >> command;
+    cout << command << ": command not found" << endl;
+  }
 }
