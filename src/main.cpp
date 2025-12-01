@@ -99,7 +99,6 @@ void type_command(const std::string &arg) {
 }
 
 void custom_command(const string &command, vector<string> arguments) {
-  auto path = find_executable_in_path(command);
   string path_with_args = command + " ";
 
   for (string args : arguments) {
