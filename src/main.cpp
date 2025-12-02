@@ -102,6 +102,14 @@ void type_command(const std::string &arg) {
   }
 }
 
+void cd_command(string arg) {
+  if (filesystem::exists(arg) && filesystem::is_directory(arg)) {
+    filesystem::current_path(arg);
+  } else {
+    cout << "cd: " << arg << ": No such file or directory" << endl;
+  }
+}
+
 void custom_command(const string &command, vector<string> arguments) {
   string path_with_args = command + " ";
 
@@ -135,6 +143,11 @@ void repl() {
       echo_command(arguments);
     } else if (command == "pwd") {
       pwd_command();
+    } else if (command == "cd") {
+      if (arguments.size() != 1) {
+        exit(1);
+      }
+      cd_command(arguments[0]);
     } else if (command == "type") {
       if (arguments.size() != 1) {
         exit(1);
