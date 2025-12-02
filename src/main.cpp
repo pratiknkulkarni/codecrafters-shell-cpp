@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 using namespace std;
 
@@ -103,6 +104,13 @@ void type_command(const std::string &arg) {
 }
 
 void cd_command(string arg) {
+  if (arg == "~" || arg == " ") {
+    auto home = getenv("HOME");
+
+    filesystem::current_path(home);
+    return;
+  }
+
   if (filesystem::exists(arg) && filesystem::is_directory(arg)) {
     filesystem::current_path(arg);
   } else {
@@ -168,6 +176,11 @@ void repl() {
 int main() {
   cout << std::unitbuf;
   cerr << std::unitbuf;
+
+
+  // char *username = getlogin();
+  // cout << "hello there " << username << endl;
+
 
   repl();
 }
