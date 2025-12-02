@@ -40,7 +40,7 @@ void exit_command() { exit(0); }
 
 void echo_command(vector<string> args) {
   string echoOutput;
-  for (auto arg : args) {
+  for (auto arg: args) {
     echoOutput += arg;
     echoOutput += " ";
   }
@@ -55,11 +55,11 @@ bool is_executable(const std::filesystem::path &path) {
     }
     auto perms = std::filesystem::status(path).permissions();
     return (perms & std::filesystem::perms::owner_exec) !=
-               std::filesystem::perms::none ||
+           std::filesystem::perms::none ||
            (perms & std::filesystem::perms::group_exec) !=
-               std::filesystem::perms::none ||
+           std::filesystem::perms::none ||
            (perms & std::filesystem::perms::others_exec) !=
-               std::filesystem::perms::none;
+           std::filesystem::perms::none;
   } catch (const std::filesystem::filesystem_error &) {
     return false;
   }
@@ -72,7 +72,7 @@ std::string find_executable_in_path(const std::string &name) {
   }
 
   auto pathDirectories = splitString(env_path, ':');
-  for (const auto &dir : pathDirectories) {
+  for (const auto &dir: pathDirectories) {
     auto fullPath = std::filesystem::path(dir) / name;
     if (is_executable(fullPath)) {
       return fullPath.string();
@@ -81,9 +81,13 @@ std::string find_executable_in_path(const std::string &name) {
   return "";
 }
 
+void pwd_command() {
+  cout << filesystem::current_path().string() << endl;
+}
+
 void type_command(const std::string &arg) {
   // start with my custom builtins
-  const vector<string> builtins{"echo", "type", "exit"};
+  const vector<string> builtins{"echo", "type", "exit", "pwd"};
   if (find(builtins.begin(), builtins.end(), arg) != builtins.end()) {
     cout << arg << " is a shell builtin" << endl;
     return;
@@ -101,7 +105,7 @@ void type_command(const std::string &arg) {
 void custom_command(const string &command, vector<string> arguments) {
   string path_with_args = command + " ";
 
-  for (string args : arguments) {
+  for (string args: arguments) {
     path_with_args += args;
     path_with_args += " ";
   }
@@ -129,6 +133,8 @@ void repl() {
       exit_command();
     } else if (command == "echo") {
       echo_command(arguments);
+    } else if (command == "pwd") {
+      pwd_command();
     } else if (command == "type") {
       if (arguments.size() != 1) {
         exit(1);
