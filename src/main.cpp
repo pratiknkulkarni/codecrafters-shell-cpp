@@ -3,8 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <vector>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 
@@ -14,6 +14,7 @@ std::vector<std::string> tokenize(const string &line) {
   string token;
 
   while (ss >> token) {
+    // cout << "pushing token = " << token << endl;
     tokens.push_back(token);
   }
 
@@ -41,7 +42,8 @@ void exit_command() { exit(0); }
 
 void echo_command(vector<string> args) {
   string echoOutput;
-  for (auto arg: args) {
+
+  for (auto arg : args) {
     echoOutput += arg;
     echoOutput += " ";
   }
@@ -56,11 +58,11 @@ bool is_executable(const std::filesystem::path &path) {
     }
     auto perms = std::filesystem::status(path).permissions();
     return (perms & std::filesystem::perms::owner_exec) !=
-           std::filesystem::perms::none ||
+               std::filesystem::perms::none ||
            (perms & std::filesystem::perms::group_exec) !=
-           std::filesystem::perms::none ||
+               std::filesystem::perms::none ||
            (perms & std::filesystem::perms::others_exec) !=
-           std::filesystem::perms::none;
+               std::filesystem::perms::none;
   } catch (const std::filesystem::filesystem_error &) {
     return false;
   }
@@ -73,7 +75,7 @@ std::string find_executable_in_path(const std::string &name) {
   }
 
   auto pathDirectories = splitString(env_path, ':');
-  for (const auto &dir: pathDirectories) {
+  for (const auto &dir : pathDirectories) {
     auto fullPath = std::filesystem::path(dir) / name;
     if (is_executable(fullPath)) {
       return fullPath.string();
@@ -82,13 +84,11 @@ std::string find_executable_in_path(const std::string &name) {
   return "";
 }
 
-void pwd_command() {
-  cout << filesystem::current_path().string() << endl;
-}
+void pwd_command() { cout << filesystem::current_path().string() << endl; }
 
 void type_command(const std::string &arg) {
   // start with my custom builtins
-  const vector<string> builtins{"echo", "type", "exit", "pwd"};
+  const vector<string> builtins{"echo", "type", "exit", "pwd", "history"};
   if (find(builtins.begin(), builtins.end(), arg) != builtins.end()) {
     cout << arg << " is a shell builtin" << endl;
     return;
@@ -118,10 +118,17 @@ void cd_command(string arg) {
   }
 }
 
+void history_command(vector<string> history_stack) {
+  cout << "$ history" << endl;
+  for (int i = 0; i < history_stack.size(); i++) {
+    cout << "  " << i + 1 << " " << history_stack[i] << endl;
+  }
+}
+
 void custom_command(const string &command, vector<string> arguments) {
   string path_with_args = command + " ";
 
-  for (string args: arguments) {
+  for (string args : arguments) {
     path_with_args += args;
     path_with_args += " ";
   }
@@ -131,19 +138,29 @@ void custom_command(const string &command, vector<string> arguments) {
 
 void repl() {
   string userInput;
+  vector<string> history;
+  history.reserve(10);
 
   while (true) {
     cout << "$ ";
     if (!getline(cin, userInput)) {
       break;
     }
+
     auto tokens = tokenize(userInput);
+    // for (auto token : tokens) {
+    //   cout << token << "\t" << token.length() << "\t" << token.size() <<
+    //   endl;
+    // }
+
     if (tokens.empty()) {
       continue;
     }
 
     const string &command = tokens[0];
     vector<string> arguments(tokens.begin() + 1, tokens.end());
+
+    history.push_back(userInput);
 
     if (command == "exit") {
       exit_command();
@@ -162,6 +179,8 @@ void repl() {
       } else {
         type_command(arguments[0]);
       }
+    } else if (command == "history") {
+      history_command(history);
     } else {
       auto path = find_executable_in_path(command);
       if (path == "") {
@@ -176,11 +195,6 @@ void repl() {
 int main() {
   cout << std::unitbuf;
   cerr << std::unitbuf;
-
-
-  // char *username = getlogin();
-  // cout << "hello there " << username << endl;
-
 
   repl();
 }
