@@ -119,7 +119,7 @@ void cd_command(string arg) {
 }
 
 void history_command(vector<string> history_stack) {
-  cout << "$ history" << endl;
+  // cout << "$ history" << endl;
   for (int i = 0; i < history_stack.size(); i++) {
     cout << "  " << i + 1 << " " << history_stack[i] << endl;
   }
@@ -148,11 +148,6 @@ void repl() {
     }
 
     auto tokens = tokenize(userInput);
-    // for (auto token : tokens) {
-    //   cout << token << "\t" << token.length() << "\t" << token.size() <<
-    //   endl;
-    // }
-
     if (tokens.empty()) {
       continue;
     }
