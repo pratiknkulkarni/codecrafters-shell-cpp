@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <readline/history.h>
+#include <readline/readline.h>
 #include <sstream>
 #include <string>
 #include <unistd.h>
@@ -118,18 +120,35 @@ void cd_command(string arg) {
   }
 }
 
-void history_command(vector<string> history_stack) {
-  for (int i = 0; i < history_stack.size(); i++) {
-    cout << "  " << i + 1 << " " << history_stack[i] << endl;
+void history_command() {
+  HIST_ENTRY **the_list = history_list();
+  if (!the_list) {
+    return;
+  };
+  for (int i = 0; i < history_length; ++i) {
+    std::cout << "  " << (history_base + i) << " " << the_list[i]->line
+              << std::endl;
   }
 }
 
 void history_command_limit(vector<string> history_stack, int limit) {
-  if (limit > history_stack.size()) {
-    history_command(history_stack);
+  HIST_ENTRY **the_list = history_list();
+  if (!the_list) {
+    return;
   }
-  for (int i = history_stack.size() - limit; i < history_stack.size(); i++) {
-    cout << " " << i << " " << history_stack[i] << endl;
+
+  int total = history_length;
+
+  if (limit >= total) {
+    history_command();
+    return;
+  }
+
+  int start = total - limit;
+
+  for (int i = start; i < total; ++i) {
+    std::cout << "  " << (history_base + i) << " " << the_list[i]->line
+              << std::endl;
   }
 }
 
@@ -145,16 +164,23 @@ void custom_command(const string &command, vector<string> arguments) {
 }
 
 void repl() {
-  string userInput;
   vector<string> history;
-  history.reserve(10);
 
   while (true) {
-    cout << "$ ";
-    if (!getline(cin, userInput)) {
+    char *line_cstr = readline("$ ");
+
+    if (!line_cstr) {
       break;
     }
 
+    string userInput(line_cstr);
+    free(line_cstr);
+
+    if (userInput.empty()) {
+      continue;
+    }
+
+    add_history(userInput.c_str());
     auto tokens = tokenize(userInput);
     if (tokens.empty()) {
       continue;
@@ -164,7 +190,6 @@ void repl() {
     vector<string> arguments(tokens.begin() + 1, tokens.end());
 
     history.push_back(userInput);
-
     if (command == "exit") {
       exit_command();
     } else if (command == "echo") {
@@ -185,10 +210,9 @@ void repl() {
     } else if (command == "history") {
       if (arguments.size() == 1) {
         int limit = stoi(arguments[0]);
-
         history_command_limit(history, limit);
       } else {
-        history_command(history);
+        history_command();
       }
     } else {
       auto path = find_executable_in_path(command);
