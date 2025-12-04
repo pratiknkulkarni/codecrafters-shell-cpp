@@ -1,0 +1,11 @@
+#cleacodecrafters s
+codecrafters test
+codecrafters submit
+#history -w
+cd /tmp
+clear
+ls
+history -w filefile
+history
+clear
+ls

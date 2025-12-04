@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <readline/history.h>
 #include <readline/readline.h>
@@ -208,9 +209,24 @@ void repl() {
         type_command(arguments[0]);
       }
     } else if (command == "history") {
+
       if (arguments.size() == 1) {
         int limit = stoi(arguments[0]);
         history_command_limit(history, limit);
+      } else if (arguments.size() == 2) {
+        string flag = arguments[0];
+        string filePath = arguments[1];
+
+        ifstream inputFile(filePath);
+        if (!inputFile.is_open()) {
+          cerr << "error opening file " << endl;
+        }
+
+        string line;
+        while (getline(inputFile, line)) {
+          add_history(line.c_str());
+        }
+
       } else {
         history_command();
       }
