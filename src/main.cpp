@@ -119,9 +119,17 @@ void cd_command(string arg) {
 }
 
 void history_command(vector<string> history_stack) {
-  // cout << "$ history" << endl;
   for (int i = 0; i < history_stack.size(); i++) {
     cout << "  " << i + 1 << " " << history_stack[i] << endl;
+  }
+}
+
+void history_command_limit(vector<string> history_stack, int limit) {
+  if (limit > history_stack.size()) {
+    history_command(history_stack);
+  }
+  for (int i = history_stack.size() - limit; i < history_stack.size(); i++) {
+    cout << " " << i << " " << history_stack[i] << endl;
   }
 }
 
@@ -175,7 +183,13 @@ void repl() {
         type_command(arguments[0]);
       }
     } else if (command == "history") {
-      history_command(history);
+      if (arguments.size() == 1) {
+        int limit = stoi(arguments[0]);
+
+        history_command_limit(history, limit);
+      } else {
+        history_command(history);
+      }
     } else {
       auto path = find_executable_in_path(command);
       if (path == "") {
