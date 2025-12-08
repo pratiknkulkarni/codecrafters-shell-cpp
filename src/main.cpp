@@ -6,6 +6,7 @@
 #include <readline/readline.h>
 #include <sstream>
 #include <string>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
 
@@ -17,7 +18,6 @@ std::vector<std::string> tokenize(const string &line) {
   string token;
 
   while (ss >> token) {
-    // cout << "pushing token = " << token << endl;
     tokens.push_back(token);
   }
 
@@ -167,6 +167,7 @@ void custom_command(const string &command, vector<string> arguments) {
 void repl() {
   vector<string> history;
 
+  int last_appended_index = 0;
   while (true) {
     char *line_cstr = readline("$ ");
 
@@ -217,6 +218,7 @@ void repl() {
           string flag = arguments[0];
           string filePath = arguments[1];
           ifstream inputFile(filePath);
+
           if (!inputFile.is_open()) {
             cerr << "error opening file " << endl;
           }
@@ -226,6 +228,20 @@ void repl() {
             add_history(line.c_str());
           }
 
+        } else if (arguments[0] == "-a") {
+          string filePath = arguments[1];
+
+          int current_length = history_length;
+          int entries_to_append = current_length - last_appended_index;
+
+          if (entries_to_append > 0) {
+            int result = append_history(entries_to_append, filePath.c_str());
+            if (result != 0) {
+              cerr << "error appending to history file" << endl;
+            } else {
+              last_appended_index = current_length;
+            }
+          }
         } else {
           string filePath = arguments[1];
           int result = write_history(filePath.c_str());

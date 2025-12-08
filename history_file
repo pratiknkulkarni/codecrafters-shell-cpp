@@ -1,0 +1,10 @@
+echo 1 2
+echo 3 4 5
+echo 6 7
+
+echo 1 2
+echo 2 3
+echo 3 4
+history -a history_file
+echo 66 67
+history -a history_file 
