@@ -31,6 +31,11 @@ void save_history_file() {
   }
 }
 
+void exit_command() {
+  save_history_file();
+  exit(0);
+}
+
 std::vector<std::string> tokenize(const string &line) {
   vector<string> tokens;
   stringstream ss(line);
@@ -59,8 +64,6 @@ std::vector<std::string> splitString(const std::string &s, char delimiter) {
   tokens.push_back(s.substr(start));
   return tokens;
 }
-
-void exit_command() { exit(0); }
 
 void echo_command(vector<string> args) {
   string echoOutput;
@@ -191,10 +194,12 @@ void repl() {
     char *line_cstr = readline("$ ");
 
     if (!line_cstr) {
+      save_history_file();
       break;
     }
 
     string userInput(line_cstr);
+
     free(line_cstr);
 
     if (userInput.empty()) {
