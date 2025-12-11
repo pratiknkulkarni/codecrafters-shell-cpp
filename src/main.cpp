@@ -12,6 +12,25 @@
 
 using namespace std;
 
+string histfile;
+
+void load_history_file() {
+  const char *hf = getenv("HISTFILE");
+  if (!hf)
+    return;
+  histfile = hf;
+  read_history(histfile.c_str());
+}
+
+void save_history_file() {
+  if (histfile.empty()) {
+    return;
+  }
+  if (write_history(histfile.c_str()) != 0) {
+    cerr << "error: could not write history to " << histfile << endl;
+  }
+}
+
 std::vector<std::string> tokenize(const string &line) {
   vector<string> tokens;
   stringstream ss(line);
@@ -266,6 +285,8 @@ void repl() {
 int main() {
   cout << std::unitbuf;
   cerr << std::unitbuf;
+  load_history_file();
 
   repl();
+  save_history_file();
 }
