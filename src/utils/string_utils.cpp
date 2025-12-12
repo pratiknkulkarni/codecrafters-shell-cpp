@@ -67,9 +67,17 @@ namespace utils {
                     break;
 
                 case State::ESCAPED_DOUBLE:
-                    current_token += c;
+                    if (c == '"' || c == '\\' || c == '$' || c == '`') {
+                        current_token += c;
+                    } else {
+                        current_token += '\\';
+                        current_token += c;
+                    }
                     state = State::IN_DOUBLE_QUOTE;
                     break;
+                    // current_token += c;
+                    // state = State::IN_DOUBLE_QUOTE;
+                    // break;
             }
         }
 
