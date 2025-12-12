@@ -7,6 +7,9 @@
 #include <iostream>
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <sys/wait.h>
+#include <cstring>
+
 
 #include "../commands/builtin_commands.h"
 #include "../utils/path_utils.h"
@@ -87,20 +90,41 @@ namespace shell {
             return;
         }
 
-        std::string full_command = command;
-        for (const auto &arg: args) {
-            full_command += " '";
-            for (char c: arg) {
-                if (c == '\'') {
-                    full_command += "'\\''";
-                } else {
-                    full_command += c;
-                }
-            }
-            full_command += "'";
+        // Build argv: argv[0] is the command as the user typed (unquoted token),
+        // following entries are the args, terminated by nullptr.
+        std::vector<std::string> argv_strings;
+        argv_strings.push_back(command); // argv[0]
+        for (const auto &a: args) argv_strings.push_back(a);
+
+        std::vector<char *> argv;
+        argv.reserve(argv_strings.size() + 1);
+        for (auto &s: argv_strings) {
+            argv.push_back(const_cast<char *>(s.c_str()));
+        }
+        argv.push_back(nullptr);
+
+        pid_t pid = fork();
+        if (pid < 0) {
+            std::cerr << "error: fork failed: " << std::strerror(errno) << '\n';
+            return;
         }
 
-        std::system(full_command.c_str());
+        if (pid == 0) {
+            execv(path->c_str(), argv.data());
+            std::cerr << "error: exec failed: " << std::strerror(errno) << '\n';
+            _exit(127);
+        } else {
+            int status = 0;
+            while (true) {
+                pid_t w = waitpid(pid, &status, 0);
+                if (w == -1) {
+                    if (errno == EINTR) continue;
+                    std::cerr << "error: waitpid failed: " << std::strerror(errno) << '\n';
+                    break;
+                }
+                break;
+            }
+        }
     }
 
     void Shell::run() {

@@ -75,9 +75,6 @@ namespace utils {
                     }
                     state = State::IN_DOUBLE_QUOTE;
                     break;
-                    // current_token += c;
-                    // state = State::IN_DOUBLE_QUOTE;
-                    // break;
             }
         }
 
