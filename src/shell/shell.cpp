@@ -58,6 +58,7 @@ namespace shell {
         }
 
         std::string line(line_cstr);
+
         free(line_cstr);
         return line;
     }
@@ -88,7 +89,15 @@ namespace shell {
 
         std::string full_command = command;
         for (const auto &arg: args) {
-            full_command += ' ' + arg;
+            full_command += " '";
+            for (char c: arg) {
+                if (c == '\'') {
+                    full_command += "'\\''";
+                } else {
+                    full_command += c;
+                }
+            }
+            full_command += "'";
         }
 
         std::system(full_command.c_str());
@@ -98,7 +107,7 @@ namespace shell {
         while (true) {
             const auto input = read_input();
             if (!input) {
-                break; // EOF or error
+                break;
             }
 
             if (input->empty()) {

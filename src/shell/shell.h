@@ -39,6 +39,10 @@ namespace shell {
 
         void execute_external_command(const std::string &command,
                                       const std::vector<std::string> &args);
+
+        void execute_with_output_redirect(const std::string &command,
+                                          const std::vector<std::string> &args,
+                                          const std::string &output_file);
     };
 }
 
